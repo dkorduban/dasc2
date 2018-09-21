@@ -30,7 +30,7 @@ def filter_replays(replay_filter):
     """Filters a directory of replays using a SC2ReplayFilter
         Args:
             replay_filter (SC2ReplayFilter):    Filter for filtering replays.
-        
+
         Returns:
             replay_metadata_list (list):   List of replay dicts of the form:
             [ { replay_id : replay_metadata } ] [ <str> : { struct } ]
@@ -39,8 +39,8 @@ def filter_replays(replay_filter):
     # Initialize replays_dir with directory specified by filter
     replays_dir = os.path.abspath(replay_filter.replays_dir)
 
-    # Initialize counters to keep track of 
-    # total SC2Replays and SC2Replays which 
+    # Initialize counters to keep track of
+    # total SC2Replays and SC2Replays which
     # meet filtering criteria
     total_replay_counter = 0
     filtered_replay_counter = 0
@@ -90,7 +90,7 @@ def __generate_filter_file(replay_filter, replay_list):
         replay_filter (SC2ReplayFilter):    Filter for filtering replays.
         replay_list (list):  List of dictionaries which matched the provided replay_filter
     """
-    
+
     # Initialize filter_dir with value from replay_filter
     filter_dir = os.path.abspath(replay_filter.filter_dir)
 
@@ -104,7 +104,7 @@ def __generate_filter_file(replay_filter, replay_list):
     with open(json_filename, 'w') as json_file:
         # Initialize empty dict to hold filter characteristics
         json_output = {}
-        
+
         # Check if map_title provide if so assign, else assign 'all'
         if replay_filter.map_title:
             map_title = replay_filter.map_title
@@ -118,10 +118,11 @@ def __generate_filter_file(replay_filter, replay_list):
         json_output.update({ 'Maps' : map_title})
         json_output.update({ 'MinMMR' : replay_filter.mmr_threshold })
         json_output.update({ 'MinAPM' : replay_filter.apm_threshold })
+        json_output.update({ 'MinLoops' : replay_filter.loops_threshold })
         json_output.update({ 'Races' : replay_filter.races })
         json_output.update({ 'WinningRaces' : replay_filter.winning_races })
         json_output.update({ 'ReplaysDirectory' : os.path.abspath(replay_filter.replays_dir) })
-        
+
         # Add replays which matched filter to json_output dict.
         json_output.update({ 'Replays' : replay_list })
 
@@ -133,15 +134,17 @@ def __generate_filter_file(replay_filter, replay_list):
 
 def parse_args():
     """Helper function to parse dasc2_filter arguments"""
-        
+
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument('--name', dest='name', action='store', default='SC2Filter',
                         help='Filter Name', required=False)
     parser.add_argument('--min_mmr', dest='mmr', action='store', default=1000,
                         type=int, help='Minimum Player MMR', required=False)
     parser.add_argument('--min_apm', dest='apm', action='store', default=10,
                         type=int, help='Minimum Player APM', required=False)
+    parser.add_argument('--min_loops', dest='loops', action='store', default=1000,
+                        type=int, help='Minimum Game Duration', required=False)
     parser.add_argument('--races', dest='races', action='store',
                         default=['Zerg','Terr','Prot'], nargs='+',
                         help="Defaults to: Zerg Terr Prot", required=False)
@@ -170,15 +173,15 @@ def main():
     processed_version = int(check_build_version(args.vers, False))
 
     # Create SC2ReplayFilter
-    replay_filter = SC2ReplayFilter(args.mmr, args.apm, args.races, args.winning_races,
+    replay_filter = SC2ReplayFilter(args.mmr, args.apm, args.loops, args.races, args.winning_races,
                         args.map, processed_version, args.r_dir, args.f_dir, args.name)
 
-    # Output replay_filter info 
+    # Output replay_filter info
     replay_filter._info()
 
     # Filter replays
     filtered_replay_list = filter_replays(replay_filter)
-    
+
     # If filter generated replays, generate a filter file denoting them.
     if filtered_replay_list:
         __generate_filter_file(replay_filter, filtered_replay_list)

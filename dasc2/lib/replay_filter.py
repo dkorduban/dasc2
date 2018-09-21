@@ -27,7 +27,7 @@ from mpyq import MPQArchive
 class SC2ReplayFilter(object):
     """This class constructs a SC2Replay Filtering object"""
 
-    def __init__(self, mmr=1000, apm=10, races=['Zerg','Terr','Prot'],
+    def __init__(self, mmr=1000, apm=10, loops=1000, races=['Zerg','Terr','Prot'],
                 winning_races=['Zerg','Terr','Prot'],
                 game_map=None, data_build=None,
                 replays_dir='./replays', filter_dir='./filters',
@@ -46,6 +46,7 @@ class SC2ReplayFilter(object):
         self.name = name
         self.mmr_threshold = mmr
         self.apm_threshold = apm
+        self.loops_threshold = loops
         self.races = races
         self.winning_races = winning_races
         self.map_title = game_map
@@ -73,7 +74,7 @@ class SC2ReplayFilter(object):
             Returns:
                 Replay metadata if matching filter else None
         """
-        
+
         # Extract JSON archive data from replay
         SC2_archive =  MPQArchive(replay).extract()
         # Load JSON archive data
@@ -90,7 +91,9 @@ class SC2ReplayFilter(object):
         if self.map_title:
             if not self.map_title == replay_map_title:
                 return None
-
+        loops_duration = 16 * float(metadata['Duration'])
+        if loops_duration < self.loops_threshold:
+            return None
         # Evaluate players and against APM, MMR, races, and winning_races threshholds
         players = metadata["Players"]
         raceFound = False
@@ -111,5 +114,5 @@ class SC2ReplayFilter(object):
         if not raceFound:
             return None
 
-        # Replay has met all criteria so return it's metadata           
+        # Replay has met all criteria so return it's metadata
         return metadata
